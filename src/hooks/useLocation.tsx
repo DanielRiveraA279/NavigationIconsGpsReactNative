@@ -18,15 +18,28 @@ export const useLocation = () => {
     });
 
     const watchId = useRef<number>();
+    const isMounted = useRef(true);
 
     useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            //cuando se esta desmontando se pone en false
+            isMounted.current = false;
+        }
+    }, []);
+
+    useEffect(() => {
+
         getCurrentLocation()
             .then(location => {
+                if(!isMounted.current) return; //si no esta montado que no haga nada mas
+
                 setInitialPosition(location);
                 setUserLocation(location);
                 setRouteLines(routes => [...routes, location]); //almacenamos localizacion actual y agregamos nueva localizacion
                 setHasLocation(true);
-            })
+            });
+
     }, []);
 
     //promesa que resuelve resultados de tipo location (interface) - Centrar la camara del Mapa
@@ -51,6 +64,9 @@ export const useLocation = () => {
         //obtengo numeros para limpiar el seguimiento de la camara gps
         watchId.current = Geolocation.watchPosition(
             ({ coords }) => {
+
+                if(!isMounted.current) return; //si no esta montado que no haga nada mas
+
 
                 const location: Location = {
                     latitude: coords.latitude,
